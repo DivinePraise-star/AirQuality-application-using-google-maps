@@ -52,4 +52,10 @@ export class StateManager {
       avg: Math.round(sum / this.measurements.length),
     };
   }
+
+  getWorstAreas(limit: number = 3): AirQoMeasurement[] {
+    return [...this.measurements]
+      .sort((a, b) => b.pm2_5.value - a.pm2_5.value)
+      .slice(0, limit);
+  }
 }

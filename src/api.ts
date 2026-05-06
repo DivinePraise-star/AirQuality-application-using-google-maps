@@ -1,4 +1,4 @@
-import { AIRQO_API_KEY, AIRQO_API_URL } from "./constants";
+import { AIRQO_API_URL } from "./constants";
 
 export interface AirQoMeasurement {
   device: string;
@@ -9,6 +9,9 @@ export interface AirQoMeasurement {
     longitude: number;
   };
   pm2_5: {
+    value: number;
+  };
+  pm10?: {
     value: number;
   };
   time: string;

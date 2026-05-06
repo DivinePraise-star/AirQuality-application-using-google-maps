@@ -5,41 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AirQo Pollution Visualization</title>
   </head>
-  <body class="m-0 p-0 overflow-hidden bg-gray-900 text-white">
-    <div id="app" class="relative w-screen h-screen">
-      <div id="map" class="absolute inset-0"></div>
+  <body class="m-0 p-0 overflow-hidden font-sans bg-gray-950 text-white antialiased">
+    <div id="app" class="flex flex-col md:flex-row h-[100dvh] w-screen relative">
       
-      <!-- Overlay UI -->
-      <div class="absolute top-4 left-4 right-4 md:right-auto md:w-96 bg-gray-900/80 backdrop-blur border border-gray-700 rounded-lg p-6 shadow-2xl z-10 flex flex-col gap-4">
-        <h1 class="text-2xl font-semibold tracking-tight">Air Quality in Kampala</h1>
-        <p class="text-sm text-gray-400">
-          Visualizing real-time PM2.5 measurements from the AirQo API.
-        </p>
+      <!-- Map Container (Top on Mobile, Right on Desktop) -->
+      <div class="relative flex-1 min-h-0 bg-gray-900 z-0 order-1 md:order-2">
+        <div id="map" class="absolute inset-0"></div>
+      </div>
 
+      <!-- UI Panel (Bottom on Mobile, Left on Desktop) -->
+      <div class="w-full md:w-[380px] flex-none bg-gray-950 border-t md:border-t-0 md:border-r border-gray-800 flex flex-col z-10 h-[45vh] md:h-full overflow-y-auto shadow-2xl order-2 md:order-1">
+        <div class="p-5 md:p-6 flex flex-col gap-5 md:gap-6 text-sm">
+          <div class="flex items-center justify-between shadow-sm pb-1 border-b border-gray-800/50 md:border-none md:pb-0 md:shadow-none">
+            <div>
+              <h1 class="text-lg md:text-xl font-semibold tracking-tight text-white mb-1">Air Quality in Kampala</h1>
+              <div class="flex items-center gap-2">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                <p class="text-[11px] md:text-xs text-gray-400" id="last-updated-text">
+                  Live data from AirQo
+                </p>
+              </div>
+            </div>
+          </div>
+
+        <!-- Mode Toggle -->
         <div class="flex flex-col gap-2">
-          <label class="text-xs font-medium text-gray-400 uppercase tracking-wider">Visualization Mode</label>
-          <div class="flex rounded-md overflow-hidden bg-gray-800 p-1">
-            <button id="mode-markers" class="flex-1 py-1.5 px-3 text-sm rounded transition-colors bg-blue-600 text-white font-medium">Markers</button>
-            <button id="mode-heatmap" class="flex-1 py-1.5 px-3 text-sm rounded transition-colors text-gray-400 hover:text-white hover:bg-gray-700 font-medium">Heatmap</button>
+          <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden md:block">Visualization</label>
+          <div class="flex rounded-lg overflow-hidden bg-gray-900 p-1 border border-gray-800">
+            <button id="mode-markers" class="flex-1 py-1.5 px-3 text-[11px] md:text-xs rounded-md transition-colors bg-white text-gray-900 shadow-sm font-medium">Markers</button>
+            <button id="mode-heatmap" class="flex-1 py-1.5 px-3 text-[11px] md:text-xs rounded-md transition-colors text-gray-400 hover:text-white hover:bg-gray-800 font-medium">Heatmap</button>
           </div>
         </div>
 
-        <div id="loading-indicator" class="hidden text-sm text-blue-400 animate-pulse">
-          Fetching AirQo data...
+        <div id="loading-indicator" class="hidden text-xs text-blue-400 flex items-center gap-2">
+          <svg class="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Fetching live data...
         </div>
 
-        <div id="error-message" class="hidden text-sm text-red-400 bg-red-950/50 p-3 rounded-md border border-red-900/50">
+        <div id="error-message" class="hidden text-xs text-red-400 bg-red-950/30 p-3 rounded-lg border border-red-900/50">
         </div>
 
-        <div id="stats" class="grid grid-cols-2 gap-4 mt-2">
-          <div class="bg-gray-800 p-3 rounded-md border border-gray-700 text-center">
-            <div class="text-xs text-gray-500 uppercase">Stations</div>
-            <div id="stat-count" class="text-xl font-mono text-white mt-1">--</div>
+        <!-- Metrics Bento -->
+        <div id="stats" class="grid grid-cols-2 gap-2 md:gap-3">
+          <div class="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-800 relative overflow-hidden group">
+            <div class="text-[9px] md:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Active Stations</div>
+            <div id="stat-count" class="text-xl md:text-2xl font-mono tracking-tight text-white">--</div>
+            <div class="absolute -right-4 -bottom-4 opacity-5 text-6xl group-hover:opacity-10 transition-opacity">📍</div>
           </div>
-          <div class="bg-gray-800 p-3 rounded-md border border-gray-700 text-center">
-            <div class="text-xs text-gray-500 uppercase">Avg PM2.5</div>
-            <div id="stat-avg" class="text-xl font-mono text-white mt-1">--</div>
+          <div class="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-800 relative overflow-hidden group">
+            <div class="text-[9px] md:text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Network Avg (PM2.5)</div>
+            <div class="flex items-baseline gap-1">
+              <div id="stat-avg" class="text-xl md:text-2xl font-mono tracking-tight text-white">--</div>
+              <div class="text-[10px] md:text-xs text-gray-500 font-mono">µg/m³</div>
+            </div>
+            <div class="absolute -right-4 -bottom-4 opacity-5 text-6xl group-hover:opacity-10 transition-opacity">☁️</div>
           </div>
+        </div>
+
+        <!-- Most Polluted Section -->
+        <div class="flex flex-col gap-2 md:gap-3 pt-2 md:pt-3 border-t border-gray-800">
+          <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden md:block">Most Polluted Stations (PM2.5)</label>
+          <div id="worst-areas-list" class="flex flex-col gap-2">
+            <!-- Will be populated dynamically -->
+            <div class="text-xs text-gray-500">Loading highest pollution zones...</div>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex flex-col gap-2 md:gap-3 pt-2 md:pt-3 border-t border-gray-800">
+          <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden md:block">AQI Scale</label>
+          <div class="grid grid-cols-2 lg:grid-cols-1 gap-y-2 gap-x-2">
+            <div class="flex items-center gap-2 md:gap-3 text-[11px] md:text-xs">
+              <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#00e400] shadow-[0_0_8px_rgba(0,228,0,0.5)]"></div>
+              <span class="w-5 text-center hidden md:inline-block">😊</span>
+              <span class="text-gray-300 truncate">Good</span>
+              <span class="ml-auto font-mono text-gray-500 text-[9px] md:text-[10px]">0-12</span>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3 text-[11px] md:text-xs">
+              <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ffff00] shadow-[0_0_8px_rgba(255,255,0,0.5)]"></div>
+              <span class="w-5 text-center hidden md:inline-block">😐</span>
+              <span class="text-gray-300 truncate">Moderate</span>
+              <span class="ml-auto font-mono text-gray-500 text-[9px] md:text-[10px]">12-35</span>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3 text-[11px] md:text-xs">
+              <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ff7e00] shadow-[0_0_8px_rgba(255,126,0,0.5)]"></div>
+              <span class="w-5 text-center hidden md:inline-block">😷</span>
+              <span class="text-gray-300 truncate">Unhealthy</span>
+              <span class="ml-auto font-mono text-gray-500 text-[9px] md:text-[10px]">35-55</span>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3 text-[11px] md:text-xs">
+              <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#ff0000] shadow-[0_0_8px_rgba(255,0,0,0.5)]"></div>
+              <span class="w-5 text-center hidden md:inline-block">🤢</span>
+              <span class="text-gray-300 truncate">Bad</span>
+              <span class="ml-auto font-mono text-gray-500 text-[9px] md:text-[10px]">55-150</span>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3 text-[11px] md:text-xs">
+              <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#8f3f97] shadow-[0_0_8px_rgba(143,63,151,0.5)]"></div>
+              <span class="w-5 text-center hidden md:inline-block">🤮</span>
+              <span class="text-gray-300 truncate">Very Bad</span>
+              <span class="ml-auto font-mono text-gray-500 text-[9px] md:text-[10px]">150-250</span>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3 text-[11px] md:text-xs">
+              <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-[#7e0023] shadow-[0_0_8px_rgba(126,0,35,0.5)]"></div>
+              <span class="w-5 text-center hidden md:inline-block">☠️</span>
+              <span class="text-gray-300 truncate">Hazardous</span>
+              <span class="ml-auto font-mono text-gray-500 text-[9px] md:text-[10px]">>250</span>
+            </div>
+          </div>
+        </div>
+
         </div>
       </div>
     </div>

@@ -1,7 +1,6 @@
-// WARNING: In a production application, these API keys should be kept on the server-side
-// and not exposed to the client. We are placing them here for this demo/prototype per the instructions.
-export const GOOGLE_MAPS_API_KEY = "AIzaSyAwNR0RoKOamzkTkJbq9TPE--yiSAzBw3M";
-export const AIRQO_API_KEY = "MF2GK8AH3UU3DN5X";
+// Load API keys from environment variables
+// Make sure to add VITE_GOOGLE_MAPS_API_KEY into AI Studio secret or .env file.
+export const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyAwNR0RoKOamzkTkJbq9TPE--yiSAzBw3M";
 export const AIRQO_API_URL = "/api/airqo/measurements";
 
 // Kampala, Uganda (center for AirQo data typically)

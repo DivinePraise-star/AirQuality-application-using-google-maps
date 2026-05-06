@@ -39,6 +39,17 @@ export class MarkerModule {
         lng: measurement.deviceDetails!.longitude,
       };
 
+      // Format time
+      const date = new Date(measurement.time);
+      const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const dateString = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      const pm10Html = measurement.pm10 && measurement.pm10.value 
+        ? `<div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #333; padding-top: 6px; margin-top: 4px;">
+             <span style="font-size: 11px; color: #888;">PM10:</span>
+             <span style="font-size: 11px; color: #ccc;">${measurement.pm10.value.toFixed(1)} µg/m³</span>
+           </div>`
+        : '';
+
       const marker = new AdvancedMarkerElement({
         position: startPosition,
         title: `${measurement.deviceDetails!.name}: ${pm25.toFixed(1)} PM2.5`,
@@ -53,24 +64,57 @@ export class MarkerModule {
         
         const infoWindow = new google.maps.InfoWindow({
            content: `
-             <div style="color: black; padding: 4px; font-family: sans-serif; min-width: 180px;">
-               <strong style="display: block; margin-bottom: 4px; font-size: 14px;">${measurement.deviceDetails!.name}</strong>
-               <div style="margin-bottom: 8px; font-size: 13px; color: #444;">
-                 <span>${emoji} ${description}</span>
+             <div style="color: #fff; background-color: #111827; padding: 12px; font-family: ui-sans-serif, system-ui, sans-serif; min-width: 200px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #374151;">
+               <div style="font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">STATION</div>
+               <strong style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; line-height: 1.2;">${measurement.deviceDetails!.name}</strong>
+               
+               <div style="display: flex; gap: 6px; margin-bottom: 12px; align-items: center;">
+                 <span style="font-size: 16px;">${emoji}</span>
+                 <span style="font-size: 12px; font-weight: 500; color: #d1d5db;">${description}</span>
                </div>
-               <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #ccc; padding-top: 6px;">
-                 <span style="font-size: 12px; color: #666;">PM2.5:</span>
-                 <span style="font-size: 12px; font-weight: bold; background: ${color}; padding: 2px 6px; border-radius: 4px; color: ${this.getContrastYIQ(color)};">
-                   ${pm25.toFixed(1)} µg/m³
-                 </span>
+               
+               <div style="display: flex; flex-direction: column; gap: 4px;">
+                 <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #374151; padding-top: 8px;">
+                   <span style="font-size: 11px; color: #9ca3af;">PM2.5:</span>
+                   <span style="font-size: 12px; font-weight: 700; background: ${color}; padding: 2px 8px; border-radius: 9999px; color: ${this.getContrastYIQ(color)};">
+                     ${pm25.toFixed(1)} µg/m³
+                   </span>
+                 </div>
+                 ${pm10Html}
+                 <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #374151; padding-top: 6px; margin-top: 2px;">
+                   <span style="font-size: 10px; color: #6b7280;">Last updated:</span>
+                   <span style="font-size: 10px; color: #9ca3af;">${dateString}, ${timeString}</span>
+                 </div>
                </div>
              </div>
            `
         });
+        
         infoWindow.open({
           anchor: marker,
           map: this.map,
         });
+        
+        // Remove default white background of google maps infowindow
+        google.maps.event.addListener(infoWindow, 'domready', () => {
+          const iwOuter = document.querySelector('.gm-style-iw.gm-style-iw-c');
+          if (iwOuter) {
+            (iwOuter as HTMLElement).style.padding = '0';
+            (iwOuter as HTMLElement).style.backgroundColor = 'transparent';
+            (iwOuter as HTMLElement).style.boxShadow = 'none';
+            (iwOuter as HTMLElement).style.borderRadius = '8px';
+          }
+          const iwBackground = document.querySelector('.gm-style-iw-d');
+          if (iwBackground) {
+             (iwBackground as HTMLElement).style.overflow = 'hidden';
+          }
+          // Try to hide the close button or style it
+          const iwCloseBtn = document.querySelector('.gm-ui-hover-effect');
+          if (iwCloseBtn) {
+            (iwCloseBtn as HTMLElement).style.display = 'none';
+          }
+        });
+        
         this.openInfoWindow = infoWindow;
       });
 

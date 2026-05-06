@@ -10,6 +10,9 @@ async function startServer() {
   app.get("/api/airqo/measurements", async (req, res) => {
     try {
       const apiKey = process.env.AIRQO_API_KEY || "MF2GK8AH3UU3DN5X";
+      if (!apiKey) {
+         return res.status(500).json({ error: "AIRQO_API_KEY is not configured on the server." });
+      }
       const airqoUrl = `https://api.airqo.net/api/v2/devices/events?token=${apiKey}`;
 
       console.log(`Proxying request to: ${airqoUrl}`);
@@ -37,6 +40,9 @@ async function startServer() {
   app.get("/api/airqo/grids", async (req, res) => {
     try {
       const apiKey = process.env.AIRQO_API_KEY || "MF2GK8AH3UU3DN5X";
+      if (!apiKey) {
+         return res.status(500).json({ error: "AIRQO_API_KEY is not configured on the server." });
+      }
       const airqoUrl = `https://api.airqo.net/api/v2/devices/metadata/grids?token=${apiKey}`;
 
       console.log(`Proxying request to: ${airqoUrl}`);
