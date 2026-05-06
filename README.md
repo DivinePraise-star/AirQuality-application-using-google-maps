@@ -6,7 +6,7 @@
 
 This contains everything you need to run your app locally.
 
-View your app: [https://ai.studio/apps/e5096a50-f993-430a-a46e-df78cf934d95](https://my-google-ai-studio-applet-99025671859.europe-west2.run.app)
+View your app in AI Studio: https://ai.studio/apps/e5096a50-f993-430a-a46e-df78cf934d95
 
 ## Run Locally
 
