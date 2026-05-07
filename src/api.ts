@@ -26,17 +26,37 @@ export class AirQoAPI {
     try {
       const response = await fetch(AIRQO_API_URL, {
         method: "GET",
+        headers: {
+          "Accept": "application/json"
+        },
+        credentials: "include"
       });
+      
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("text/html")) {
+        const text = await response.text();
+        if (text.includes("Cookie check")) {
+          throw new Error("Browser is blocking cookies. Please open the app in a new tab.");
+        }
+        throw new Error(`Expected JSON but got HTML. Status: ${response.status}`);
+      }
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch AirQo data! Status: ${response.status}`);
+        let errorText = `Status: ${response.status}`;
+        try {
+           const errData = await response.json();
+           if (errData.error) errorText += ` - ${errData.error}`;
+        } catch (e) {
+           // ignore json parse error
+        }
+        throw new Error(`Failed to fetch AirQo data! ${errorText}`);
       }
 
       const data = await response.json();
       
       // Validate response structure
       if (!data || !data.measurements) {
-        throw new Error("Invalid format received from AirQo API");
+        throw new Error("Invalid format received from AirQo API: Missing 'measurements' array.");
       }
 
       // Filter out measurements without location or pm2.5 data

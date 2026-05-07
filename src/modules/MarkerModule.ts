@@ -4,6 +4,7 @@ import { MarkerClusterer } from "@googlemaps/markerclusterer";
 export class MarkerModule {
   private map: google.maps.Map;
   private markers: google.maps.marker.AdvancedMarkerElement[] = [];
+  private markersById: Map<string, google.maps.marker.AdvancedMarkerElement> = new Map();
   private clusterer: MarkerClusterer | null = null;
   private openInfoWindow: google.maps.InfoWindow | null = null;
 
@@ -23,15 +24,63 @@ export class MarkerModule {
       const emoji = AirQoAPI.getAQIEmoji(pm25);
       const description = AirQoAPI.getAQIDescription(pm25);
 
-      const glyphEl = document.createElement("div");
-      glyphEl.style.fontSize = "14px";
-      glyphEl.style.lineHeight = "1";
-      glyphEl.textContent = emoji;
-
       const pin = new PinElement({
         background: color,
         borderColor: "#ffffff",
-        glyph: glyphEl,
+        glyphText: emoji,
+      });
+      
+      // Make content interactive and add custom hover tooltip
+      pin.style.cursor = "pointer";
+      
+      pin.addEventListener("mouseenter", (e) => {
+        let tooltip = document.getElementById("marker-tooltip");
+        if (!tooltip) {
+          tooltip = document.createElement("div");
+          tooltip.id = "marker-tooltip";
+          // Add Tailwind classes for tooltip styling
+          tooltip.className = "fixed z-50 pointer-events-none bg-gray-900 border border-gray-700 text-white p-3 rounded-xl shadow-2xl text-xs transform -translate-x-1/2 -translate-y-full mt-[-20px] transition-opacity duration-200 opacity-0";
+          document.body.appendChild(tooltip);
+        }
+        tooltip.innerHTML = `
+          <div class="text-[10px] text-gray-400 font-semibold tracking-wider uppercase mb-1">Station</div>
+          <strong class="block mb-2 font-bold text-sm text-gray-100">${measurement.deviceDetails!.name}</strong>
+          <div class="flex items-center gap-2 mb-3 bg-gray-800/80 px-2 py-1.5 rounded-lg border border-gray-700/50">
+            <span class="text-[16px]">${emoji}</span>
+            <span class="text-gray-300 font-medium">${description}</span>
+          </div>
+          <div class="flex justify-between items-center gap-6">
+            <span class="text-gray-400">PM2.5</span>
+            <span class="font-bold px-2 py-0.5 rounded text-[11px]" style="background-color: ${color}; color: ${this.getContrastYIQ(color)};">${pm25.toFixed(1)} µg/m³</span>
+          </div>
+        `;
+        tooltip.style.display = "block";
+        // Small timeout to allow display block before opacity transition
+        requestAnimationFrame(() => {
+          tooltip.style.opacity = "1";
+        });
+        tooltip.style.left = `${(e as MouseEvent).clientX}px`;
+        tooltip.style.top = `${(e as MouseEvent).clientY}px`;
+      });
+      
+      pin.addEventListener("mousemove", (e) => {
+        const tooltip = document.getElementById("marker-tooltip");
+        if (tooltip) {
+          tooltip.style.left = `${(e as MouseEvent).clientX}px`;
+          tooltip.style.top = `${(e as MouseEvent).clientY}px`;
+        }
+      });
+      
+      pin.addEventListener("mouseleave", () => {
+        const tooltip = document.getElementById("marker-tooltip");
+        if (tooltip) {
+          tooltip.style.opacity = "0";
+          setTimeout(() => {
+            if (tooltip.style.opacity === "0") {
+               tooltip.style.display = "none";
+            }
+          }, 200);
+        }
       });
 
       const startPosition = {
@@ -52,9 +101,9 @@ export class MarkerModule {
 
       const marker = new AdvancedMarkerElement({
         position: startPosition,
-        title: `${measurement.deviceDetails!.name}: ${pm25.toFixed(1)} PM2.5`,
-        content: pin.element,
+        gmpClickable: true,
       });
+      marker.appendChild(pin);
 
       // Optional: Add info window on click
       marker.addEventListener("gmp-click", () => {
@@ -118,6 +167,7 @@ export class MarkerModule {
         this.openInfoWindow = infoWindow;
       });
 
+      this.markersById.set(measurement.device, marker);
       return marker;
     });
 
@@ -126,6 +176,13 @@ export class MarkerModule {
       map: this.map,
       markers: this.markers,
     });
+  }
+
+  openInfoWindowForDevice(deviceId: string) {
+    const marker = this.markersById.get(deviceId);
+    if (marker) {
+      google.maps.event.trigger(marker, 'gmp-click');
+    }
   }
 
   // Helper function to figure out text color over AQI badge backgrounds
@@ -154,5 +211,6 @@ export class MarkerModule {
     }
     
     this.markers = [];
+    this.markersById.clear();
   }
 }

@@ -2,6 +2,8 @@ import "./index.css";
 import { StateManager } from "./StateManager";
 import { MapManager } from "./MapManager";
 import { StageManager } from "./StageManager";
+import { RouterModule } from "./modules/RouterModule";
+import { WeatherModule } from "./modules/WeatherModule";
 import { AirQoAPI } from "./api";
 
 // Ensure styles load correctly
@@ -20,6 +22,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 3. Initialize Stage Manager (Orchestrator)
     new StageManager(map, stateManager);
+
+    // Initialize Route Module
+    new RouterModule(map, stateManager);
+
+    // Initialize Weather Module
+    new WeatherModule(map, stateManager);
 
     // 4. Setup UI Events for Toggle Buttons
     const btnMarkers = document.getElementById("mode-markers");
@@ -51,7 +59,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       updateButtonStyles("heatmap");
     });
 
-    // 5. Fetch Data Logic
+    // 5. Region Selector Logic
+    const regionSelector = document.getElementById("region-selector") as HTMLSelectElement;
+    if (regionSelector) {
+       regionSelector.addEventListener("change", (e) => {
+          const value = (e.target as HTMLSelectElement).value;
+          const regions: Record<string, { lat: number; lng: number }> = {
+            "kampala": { lat: 0.3476, lng: 32.5825 },
+            "nairobi": { lat: -1.2921, lng: 36.8219 },
+            "lagos": { lat: 6.5244, lng: 3.3792 },
+            "douala": { lat: 4.0511, lng: 9.7679 },
+            "dakar": { lat: 14.7167, lng: -17.4677 }
+          };
+          if (regions[value]) {
+            map.panTo(regions[value]);
+            map.setZoom(11);
+          }
+       });
+    }
+
+    // 6. Fetch Data Logic
     const fetchData = async () => {
       try {
         // Only show loading indicator heavily on initial load to avoid UI jumping every 2 mins
@@ -86,14 +113,56 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Initial fetch
     await fetchData();
 
-    // Adjust map to data bounds or center on a specific region based on initial data
-    const initialData = stateManager.getMeasurements();
-    if (initialData.length > 0 && initialData[0].deviceDetails) {
-       map.setCenter({ 
-           lat: initialData[0].deviceDetails.latitude, 
-           lng: initialData[0].deviceDetails.longitude 
+    // Center map based on default region
+    if (regionSelector) {
+        const value = regionSelector.value;
+        const regions: Record<string, { lat: number; lng: number }> = {
+          "kampala": { lat: 0.3476, lng: 32.5825 },
+          "nairobi": { lat: -1.2921, lng: 36.8219 },
+          "lagos": { lat: 6.5244, lng: 3.3792 },
+          "douala": { lat: 4.0511, lng: 9.7679 },
+          "dakar": { lat: 14.7167, lng: -17.4677 }
+        };
+        if (regions[value]) {
+          map.setCenter(regions[value]);
+          map.setZoom(11);
+        }
+    } else {
+        const initialData = stateManager.getMeasurements();
+        if (initialData.length > 0 && initialData[0].deviceDetails) {
+           map.setCenter({ 
+               lat: initialData[0].deviceDetails.latitude, 
+               lng: initialData[0].deviceDetails.longitude 
+           });
+           map.setZoom(11);
+        }
+    }
+
+    // 7. Locate Me Feature
+    const locateBtn = document.getElementById("btn-locate");
+    if (locateBtn) {
+       locateBtn.addEventListener("click", () => {
+         if (navigator.geolocation) {
+           locateBtn.classList.add("opacity-50", "cursor-wait");
+           navigator.geolocation.getCurrentPosition(
+             (position) => {
+               const pos = {
+                 lat: position.coords.latitude,
+                 lng: position.coords.longitude,
+               };
+               map.panTo(pos);
+               map.setZoom(13);
+               locateBtn.classList.remove("opacity-50", "cursor-wait");
+             },
+             () => {
+               locateBtn.classList.remove("opacity-50", "cursor-wait");
+               alert("Error: The Geolocation service failed.");
+             }
+           );
+         } else {
+           alert("Error: Your browser doesn't support geolocation.");
+         }
        });
-       map.setZoom(11);
     }
 
     // Set interval for periodic refresh (every 2 minutes)

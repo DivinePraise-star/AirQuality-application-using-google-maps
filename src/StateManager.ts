@@ -38,23 +38,25 @@ export class StateManager {
     this.listeners.forEach((listener) => listener());
   }
 
-  getStats() {
-    if (this.measurements.length === 0) return { count: 0, avg: 0 };
+  getStats(customMeasurements?: AirQoMeasurement[]) {
+    const data = customMeasurements || this.measurements;
+    if (data.length === 0) return { count: 0, avg: 0 };
     
     let sum = 0;
-    this.measurements.forEach((m) => {
+    data.forEach((m) => {
       // Use value
       sum += m.pm2_5.value;
     });
 
     return {
-      count: this.measurements.length,
-      avg: Math.round(sum / this.measurements.length),
+      count: data.length,
+      avg: Math.round(sum / data.length),
     };
   }
 
-  getWorstAreas(limit: number = 3): AirQoMeasurement[] {
-    return [...this.measurements]
+  getWorstAreas(limit: number = 3, customMeasurements?: AirQoMeasurement[]): AirQoMeasurement[] {
+    const data = customMeasurements || this.measurements;
+    return [...data]
       .sort((a, b) => b.pm2_5.value - a.pm2_5.value)
       .slice(0, limit);
   }

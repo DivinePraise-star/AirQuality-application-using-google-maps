@@ -11,6 +11,52 @@
       <!-- Map Container (Top on Mobile, Right on Desktop) -->
       <div class="relative flex-1 min-h-0 bg-gray-900 z-0 order-1 md:order-2">
         <div id="map" class="absolute inset-0"></div>
+        
+        <!-- Clean Route Planner Panel -->
+        <div class="absolute top-3 right-3 md:top-6 md:left-6 z-10 w-[calc(100%-24px)] md:w-80 bg-gray-950/90 backdrop-blur-md rounded-xl border border-gray-800 shadow-2xl overflow-hidden shadow-black/50 transition-all duration-300">
+          <div id="routing-header" class="p-3 bg-gray-900/50 border-b border-gray-800 flex justify-between items-center cursor-pointer hover:bg-gray-800/50">
+            <h2 class="font-semibold text-sm text-white flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400"><path d="M14 18a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4"/><circle cx="6" cy="14" r="2"/><circle cx="18" cy="18" r="2"/><path d="M12 6a4 4 0 0 1 4 4v4"/></svg>
+              Clean Air Route Planner
+            </h2>
+            <svg id="routing-chevron" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 transition-transform"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+          
+          <div id="routing-body" class="p-4 flex flex-col gap-3 hidden">
+             <div class="flex flex-col gap-1.5">
+               <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Origin</label>
+               <input id="origin-input" type="text" placeholder="Enter origin..." class="w-full bg-gray-900 border border-gray-800 text-white text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors" />
+             </div>
+             
+             <div class="flex flex-col gap-1.5">
+               <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Destination</label>
+               <input id="destination-input" type="text" placeholder="Enter destination..." class="w-full bg-gray-900 border border-gray-800 text-white text-xs rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors" />
+             </div>
+             
+             <div class="text-[10px] text-gray-400 mt-[-4px]">If search fails, map-click to set points!</div>
+             
+             <button id="btn-calc-route" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-xs transition-colors mt-1">
+               Find Cleanest Route
+             </button>
+             
+             <button id="btn-clear-route" class="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium py-2 px-4 rounded-lg text-xs transition-colors mt-1 hidden">
+               Clear Route
+             </button>
+
+             <!-- Route Results / Summary -->
+             <div id="routing-results" class="mt-2 hidden flex-col gap-2">
+                <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Route Quality (PM2.5)</div>
+                <div id="routing-stats" class="text-xs text-gray-300 bg-gray-900 p-2 rounded-lg border border-gray-800">
+                  <!-- details go here -->
+                </div>
+             </div>
+          </div>
+        </div>
+        <div class="absolute bottom-[100px] md:bottom-6 right-3 md:right-6 z-10 flex flex-col gap-2 pointer-events-none">
+          <button id="btn-locate" class="bg-gray-900 border border-gray-700 text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors pointer-events-auto" title="Locate Me">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 12A10 10 0 1 0 2 12"/><path d="m12 2-1 5"/><path d="m12 22 1-5"/><path d="m22 12-5 1"/><path d="m2 12 5-1"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
       </div>
 
       <!-- UI Panel (Bottom on Mobile, Left on Desktop) -->
@@ -18,7 +64,7 @@
         <div class="p-5 md:p-6 flex flex-col gap-5 md:gap-6 text-sm">
           <div class="flex items-center justify-between shadow-sm pb-1 border-b border-gray-800/50 md:border-none md:pb-0 md:shadow-none">
             <div>
-              <h1 class="text-lg md:text-xl font-semibold tracking-tight text-white mb-1">Air Quality in Kampala</h1>
+              <h1 class="text-lg md:text-xl font-semibold tracking-tight text-white mb-1">Air Quality Monitor</h1>
               <div class="flex items-center gap-2">
                 <span class="relative flex h-2 w-2">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -31,12 +77,25 @@
             </div>
           </div>
 
-        <!-- Mode Toggle -->
-        <div class="flex flex-col gap-2">
-          <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden md:block">Visualization</label>
-          <div class="flex rounded-lg overflow-hidden bg-gray-900 p-1 border border-gray-800">
-            <button id="mode-markers" class="flex-1 py-1.5 px-3 text-[11px] md:text-xs rounded-md transition-colors bg-white text-gray-900 shadow-sm font-medium">Markers</button>
-            <button id="mode-heatmap" class="flex-1 py-1.5 px-3 text-[11px] md:text-xs rounded-md transition-colors text-gray-400 hover:text-white hover:bg-gray-800 font-medium">Heatmap</button>
+        <!-- Select Region and Mode Toggle -->
+        <div class="flex flex-col gap-3">
+          <div class="flex flex-col gap-2">
+            <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden md:block" for="region-selector">Region</label>
+            <select id="region-selector" class="bg-gray-900 border border-gray-800 text-white text-[11px] md:text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2 outline-none">
+              <option value="kampala">Kampala, Uganda</option>
+              <option value="nairobi">Nairobi, Kenya</option>
+              <option value="lagos">Lagos, Nigeria</option>
+              <option value="douala">Douala, Cameroon</option>
+              <option value="dakar">Dakar, Senegal</option>
+            </select>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden md:block">Visualization</label>
+            <div class="flex rounded-lg overflow-hidden bg-gray-900 p-1 border border-gray-800">
+              <button id="mode-markers" class="flex-1 py-1.5 px-3 text-[11px] md:text-xs rounded-md transition-colors bg-white text-gray-900 shadow-sm font-medium">Markers</button>
+              <button id="mode-heatmap" class="flex-1 py-1.5 px-3 text-[11px] md:text-xs rounded-md transition-colors text-gray-400 hover:text-white hover:bg-gray-800 font-medium">Heatmap</button>
+            </div>
           </div>
         </div>
 
@@ -49,6 +108,17 @@
         </div>
 
         <div id="error-message" class="hidden text-xs text-red-400 bg-red-950/30 p-3 rounded-lg border border-red-900/50">
+        </div>
+
+        <!-- Health Recommendation -->
+        <div id="health-recommendation" class="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-800 text-sm hidden">
+          <div class="flex items-start gap-3">
+             <div id="health-emoji" class="text-3xl min-w-8 text-center pt-1 drop-shadow-md">😊</div>
+             <div>
+               <h3 id="health-title" class="font-bold text-white mb-1">Good</h3>
+               <p id="health-desc" class="text-xs text-gray-400">Air quality is considered satisfactory, and air pollution poses little or no risk.</p>
+             </div>
+          </div>
         </div>
 
         <!-- Metrics Bento -->
@@ -68,12 +138,33 @@
           </div>
         </div>
 
-        <!-- Most Polluted Section -->
-        <div class="flex flex-col gap-2 md:gap-3 pt-2 md:pt-3 border-t border-gray-800">
-          <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest hidden md:block">Most Polluted Stations (PM2.5)</label>
-          <div id="worst-areas-list" class="flex flex-col gap-2">
+        <!-- Current Weather -->
+        <div class="bg-gray-900/80 p-3 md:p-4 rounded-xl border border-gray-800 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+               <div id="weather-icon" class="text-3xl drop-shadow-md">🌤️</div>
+               <div>
+                  <div class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest leading-none mb-1">Local Weather</div>
+                  <div id="weather-temp" class="text-xl font-mono text-white font-bold tracking-tight">--°C</div>
+               </div>
+            </div>
+            <div class="text-right">
+               <div id="weather-condition" class="text-sm font-medium text-gray-300">Loading...</div>
+               <div id="weather-humidity" class="text-xs text-gray-500 font-mono mt-0.5">Humidity: --%</div>
+            </div>
+        </div>
+
+        <!-- Station Directory -->
+        <div class="flex flex-col gap-2 md:gap-3 pt-2 md:pt-3 border-t border-gray-800 flex-1 min-h-[150px]">
+          <div class="flex justify-between items-center hidden md:flex">
+             <label class="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Station Directory</label>
+          </div>
+          <div class="relative">
+             <input type="text" id="search-stations" placeholder="Search stations..." class="w-full bg-gray-900 border border-gray-800 text-white text-[11px] md:text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none pl-8">
+             <svg class="w-4 h-4 text-gray-500 absolute left-2.5 top-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+          <div id="worst-areas-list" class="flex flex-col gap-2 overflow-y-auto pr-1 pb-1">
             <!-- Will be populated dynamically -->
-            <div class="text-xs text-gray-500">Loading highest pollution zones...</div>
+            <div class="text-xs text-gray-500">Loading stations...</div>
           </div>
         </div>
 
