@@ -6,6 +6,7 @@ export class WeatherModule {
   private currentLat: number = 0;
   private currentLng: number = 0;
   private debounceTimer: number | null = null;
+  private isExpanded: boolean = false;
 
   constructor(map: google.maps.Map, stateManager: StateManager) {
     this.map = map;
@@ -26,10 +27,33 @@ export class WeatherModule {
       }, 1000);
     });
 
+    const header = document.getElementById("weather-header");
+    if (header) {
+      header.addEventListener("click", () => this.toggleFormat());
+    }
+
     // Initial fetch
     const center = this.map.getCenter();
     if (center) {
         this.fetchWeather(center.lat(), center.lng());
+    }
+  }
+
+  private toggleFormat() {
+    this.isExpanded = !this.isExpanded;
+    const body = document.getElementById("weather-forecast-body");
+    const chevron = document.getElementById("weather-chevron");
+    if (body) {
+      if (this.isExpanded) {
+        body.classList.remove("hidden");
+        body.classList.add("flex");
+      } else {
+        body.classList.add("hidden");
+        body.classList.remove("flex");
+      }
+    }
+    if (chevron) {
+      chevron.style.transform = this.isExpanded ? "rotate(180deg)" : "rotate(0deg)";
     }
   }
 
@@ -47,20 +71,59 @@ export class WeatherModule {
       if (conditionEl) conditionEl.innerText = "Updating...";
 
       // Standard free non-commercial Open-Meteo API
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto`;
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(4)}&longitude=${lng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=3`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Weather request failed");
       
       const data = await response.json();
       const current = data.current;
+      const daily = data.daily;
       
       if (current) {
          this.updateUI(current.temperature_2m, current.relative_humidity_2m, current.weather_code);
+      }
+      
+      if (daily) {
+         this.renderForecast(daily);
       }
     } catch (e) {
       console.error(e);
       const conditionEl = document.getElementById("weather-condition");
       if (conditionEl) conditionEl.innerText = "Weather unavailable";
+    }
+  }
+
+  private renderForecast(daily: any) {
+    const container = document.getElementById("forecast-container");
+    if (!container) return;
+    
+    container.innerHTML = "";
+    
+    const time = daily.time;
+    const maxTemps = daily.temperature_2m_max;
+    const minTemps = daily.temperature_2m_min;
+    const codes = daily.weather_code;
+    
+    for (let i = 0; i < time.length; i++) {
+       const dateStr = time[i];
+       const dateObj = new Date(dateStr);
+       // Format day: 'Mon', 'Tue' etc.
+       const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+       const { emoji } = this.getWeatherDetails(codes[i]);
+       
+       const maxT = Math.round(maxTemps[i]);
+       const minT = Math.round(minTemps[i]);
+       
+       const itemStr = `
+         <div class="bg-gray-900/60 border border-gray-800/80 rounded-xl p-2.5 flex flex-col items-center text-center justify-center gap-1.5 transition-colors hover:bg-gray-900/80 shadow-sm">
+            <div class="text-[10px] font-medium text-gray-500 uppercase tracking-widest">${dayName}</div>
+            <div class="text-3xl drop-shadow-sm my-1">${emoji}</div>
+            <div class="text-xs font-mono font-medium mt-0.5">
+               <span class="text-gray-100">${maxT}°</span><span class="text-gray-500 ml-1.5">${minT}°</span>
+            </div>
+         </div>
+       `;
+       container.innerHTML += itemStr;
     }
   }
 

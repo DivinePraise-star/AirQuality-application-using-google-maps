@@ -170,18 +170,18 @@ export class StageManager {
       const dateString = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 
       return `
-        <div class="flex flex-col p-2 rounded-lg bg-gray-900/50 border border-gray-800 cursor-pointer hover:bg-gray-800 transition-colors station-item" data-lat="${area.deviceDetails?.latitude}" data-lng="${area.deviceDetails?.longitude}" data-device="${area.device}">
+        <div class="flex flex-col p-2.5 rounded-xl bg-gray-900/40 border border-gray-800/80 cursor-pointer hover:bg-gray-800/60 transition-all station-item" data-lat="${area.deviceDetails?.latitude}" data-lng="${area.deviceDetails?.longitude}" data-device="${area.device}">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2 overflow-hidden">
-              <span class="text-sm shrink-0">${emoji}</span>
-              <span class="text-[11px] md:text-xs text-gray-300 truncate font-medium">${index + 1}. ${area.deviceDetails?.name || area.device}</span>
+            <div class="flex items-center gap-2.5 overflow-hidden">
+              <span class="text-sm shrink-0 drop-shadow-sm">${emoji}</span>
+              <span class="text-[11px] md:text-xs text-gray-200 truncate font-medium">${index + 1}. ${area.deviceDetails?.name || area.device}</span>
             </div>
-            <div class="px-2 py-0.5 rounded ${textColor} text-[10px] md:text-xs font-bold shrink-0" style="background-color: ${color}">
+            <div class="px-2 py-0.5 rounded-md ${textColor} text-[10px] md:text-xs font-bold shrink-0 shadow-sm" style="background-color: ${color}">
               ${pm25.toFixed(1)}
             </div>
           </div>
           <!-- Expanded details (hidden by default) -->
-          <div class="hidden flex-col gap-1 mt-2 pt-2 border-t border-gray-700/50 text-[10px] text-gray-400 station-details">
+          <div class="hidden flex-col gap-1.5 mt-2.5 pt-2.5 border-t border-gray-700/50 text-[10px] text-gray-400 station-details">
             <div class="flex justify-between"><span>AQI Context:</span> <span class="text-gray-300 font-medium">${description}</span></div>
             <div class="flex justify-between"><span>PM2.5:</span> <span class="text-gray-300 font-medium">${pm25.toFixed(2)} µg/m³</span></div>
             ${area.pm10 && area.pm10.value ? `<div class="flex justify-between"><span>PM10:</span> <span class="text-gray-300 font-medium">${area.pm10.value.toFixed(2)} µg/m³</span></div>` : ''}

@@ -1,6 +1,6 @@
 {
   "name": "Air quality monitor system",
   "description": "enhanced air quality monitoring system, with weather updates and pathfinding services",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": []
 }
